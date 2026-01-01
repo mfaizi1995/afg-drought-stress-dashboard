@@ -1,0 +1,11 @@
+earthengine-api
+geemap
+pandas
+numpy
+geopandas
+shapely
+pyproj
+matplotlib
+tqdm
+jupyter
+ipykernel
