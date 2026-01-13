@@ -2,9 +2,9 @@
 
 District-level drought monitoring for Afghanistan using satellite data (2000–2025).
 
-## What This Does
+## Overview
 
-Combines three satellite-derived indicators into a Composite Drought Index (CDI) for all 399 Afghan districts:
+This project combines three satellite-derived indicators into a Composite Drought Index (CDI) for all 399 Afghan districts:
 
 - **VCI** (Vegetation Condition Index) — vegetation health from MODIS NDVI
 - **TCI** (Temperature Condition Index) — heat stress from MODIS LST
