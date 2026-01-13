@@ -11,10 +11,8 @@ venv/
 # OS
 .DS_Store
 
-# Data (keep raw/processed out of git)
-data/raw/
+# Data (keep interim out of git, but include raw and processed for deployment)
 data/interim/
-data/processed/
 
 # Outputs
 reports/figures/

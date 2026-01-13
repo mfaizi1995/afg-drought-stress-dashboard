@@ -15,8 +15,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Paths
-DATA_DIR = Path(__file__).parent.parent / "data"
+# Paths - resolve to absolute path for Streamlit Cloud compatibility
+APP_DIR = Path(__file__).parent.resolve()
+ROOT_DIR = APP_DIR.parent
+DATA_DIR = ROOT_DIR / "data"
 PROCESSED_DIR = DATA_DIR / "processed"
 RAW_DIR = DATA_DIR / "raw"
 
