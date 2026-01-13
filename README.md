@@ -23,11 +23,11 @@ CDI ranges from 0 (extreme drought) to 100 (wet conditions), with 50 as normal.
 
 ## Notebooks
 
-1. **01_overview_and_data_sources** — Project docs, methods, limitations
+1. **01_project_overview** — Project docs, methods, limitations
 2. **02_data_extraction_and_preprocessing** — GEE extraction and spatial aggregation
 3. **03_drought_indicator_construction** — VCI, TCI, SPI computation
-4. **04_composite_drought_index_and_validation** — CDI creation and weight sensitivity
-5. **05_mapping_and_spatiotemporal_analysis** — Maps, validation, hotspots
+4. **04_composite_drought_index** — CDI creation and weight sensitivity
+5. **05_validation_and_analysis** — Maps, validation, hotspots
 
 ## Quick Start
 
