@@ -1,7 +1,7 @@
 earthengine-api
 geemap
-pandas
-numpy
+pandas>=2.0.0
+numpy>=1.24.0
 geopandas
 shapely
 pyproj
@@ -9,3 +9,7 @@ matplotlib
 tqdm
 jupyter
 ipykernel
+streamlit>=1.28.0
+seaborn
+scipy
+plotly>=5.18.0
