@@ -23,11 +23,11 @@ CDI ranges from 0 (extreme drought) to 100 (wet conditions), with 50 as normal.
 
 ## Notebooks
 
-1. **01_project_overview** — Project docs, methods, limitations
-2. **02_data_extraction_and_preprocessing** — GEE extraction and spatial aggregation
-3. **03_drought_indicator_construction** — VCI, TCI, SPI computation
-4. **04_composite_drought_index** — CDI creation and weight sensitivity
-5. **05_validation_and_analysis** — Maps, validation, hotspots
+1. **01_project_overview** - Project docs, methods, limitations
+2. **02_data_extraction_and_preprocessing** - GEE extraction and spatial aggregation
+3. **03_drought_indicator_construction** - VCI, TCI, SPI computation
+4. **04_composite_drought_index** - CDI creation and weight sensitivity
+5. **05_validation_and_analysis** - Maps, validation, hotspots
 
 ## Quick Start
 
@@ -35,13 +35,13 @@ CDI ranges from 0 (extreme drought) to 100 (wet conditions), with 50 as normal.
 pip install -r requirements.txt
 ```
 
-Notebooks are designed to run in order. Notebook 02 requires Google Earth Engine authentication—exported data is already in `data/raw/` if you want to skip that step.
+Notebooks are designed to run in order. Notebook 02 requires Google Earth Engine authentication (exported data is already in `data/raw/` if you want to skip that step).
 
 ## Outputs
 
-- `data/processed/afg_drought_indicators_2000_2025.csv` — Full time series with all indices
-- `data/processed/afg_district_drought_summary.csv` — District-level statistics
-- `dashboard/app.py` — Interactive dashboard (Plotly Dash)
+- `data/processed/afg_drought_indicators_2000_2025.csv` - Full time series with all indices
+- `data/processed/afg_district_drought_summary.csv` - District-level statistics
+- `dashboard/app.py` - Interactive dashboard (Plotly Dash)
 
 ## Limitations
 
