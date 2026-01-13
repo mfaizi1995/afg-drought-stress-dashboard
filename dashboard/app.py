@@ -10,7 +10,7 @@ from datetime import datetime
 # Page configuration
 st.set_page_config(
     page_title="Afghanistan Drought Stress Dashboard",
-    page_icon="🌾",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -97,7 +97,7 @@ def get_data():
 # Main app
 def main():
     # Header
-    st.title("🌾 Afghanistan Drought Stress Dashboard")
+    st.title("Afghanistan Drought Stress Dashboard")
     st.markdown("Monitoring drought conditions across Afghanistan using satellite-derived indices (2000-2025)")
     
     # Load data
@@ -109,7 +109,7 @@ def main():
         return
     
     # Sidebar controls
-    st.sidebar.header("🎛️ Dashboard Controls")
+    st.sidebar.header("Dashboard Controls")
     
     # CDI toggle
     cdi_column = st.sidebar.radio(
@@ -119,7 +119,7 @@ def main():
     )
     
     # Date range selector
-    st.sidebar.subheader("📅 Date Range")
+    st.sidebar.subheader("Date Range")
     min_date = indicators_df['date'].min()
     max_date = indicators_df['date'].max()
     
@@ -131,7 +131,7 @@ def main():
     )
     
     # Province/District selection
-    st.sidebar.subheader("📍 Location Filter")
+    st.sidebar.subheader("Location Filter")
     provinces = sorted(indicators_df['ADM1_NAME'].unique())
     selected_provinces = st.sidebar.multiselect(
         "Select Province(s)",
@@ -152,7 +152,7 @@ def main():
     )
     
     # Drought severity threshold
-    st.sidebar.subheader("⚠️ Alert Threshold")
+    st.sidebar.subheader("Alert Threshold")
     drought_threshold = st.sidebar.slider(
         "Drought Alert Threshold (CDI)",
         min_value=0,
@@ -171,7 +171,7 @@ def main():
     )
     
     # ==================== CURRENT CONDITIONS PANEL ====================
-    st.header("📊 Current Conditions")
+    st.header("Current Conditions")
     
     # Get latest date data
     latest_date = filtered_df['date'].max()
@@ -216,7 +216,7 @@ def main():
     
     # Drought Alert Box
     if severe_count > 0:
-        st.warning(f"⚠️ **DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold} (severe drought conditions)")
+        st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold} (severe drought conditions)")
         
         # Show affected districts
         affected_districts = latest_data[latest_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
@@ -224,7 +224,7 @@ def main():
             st.dataframe(affected_districts.rename(columns={cdi_column: 'CDI Value'}), use_container_width=True)
     
     # ==================== INTERACTIVE MAP PANEL ====================
-    st.header("🗺️ Interactive Drought Map")
+    st.header("Interactive Drought Map")
     
     # Date slider for map
     available_dates = sorted(filtered_df['date'].unique())
@@ -291,7 +291,7 @@ def main():
             st.plotly_chart(fig_bar, use_container_width=True)
     
     # ==================== TIME SERIES PANEL ====================
-    st.header("📈 Time Series Analysis")
+    st.header("Time Series Analysis")
     
     # Allow selection of districts for time series
     ts_districts = selected_districts if selected_districts else list(filtered_df['ADM2_NAME'].unique()[:5])
@@ -368,7 +368,7 @@ def main():
             st.plotly_chart(fig_spi, use_container_width=True)
     
     # ==================== HISTORICAL COMPARISON PANEL ====================
-    st.header("📅 Historical Comparison")
+    st.header("Historical Comparison")
     
     col1, col2 = st.columns(2)
     
@@ -435,7 +435,7 @@ def main():
             st.metric("Max CDI", f"{historical_data[cdi_column].max():.1f}")
     
     # ==================== SUMMARY TABLE ====================
-    st.header("📋 District Summary")
+    st.header("District Summary")
     
     # Filter summary based on selection
     if selected_provinces:
@@ -465,7 +465,7 @@ def main():
     )
     
     # ==================== DOWNLOAD SECTION ====================
-    st.header("📥 Download Data")
+    st.header("Download Data")
     
     col1, col2 = st.columns(2)
     
@@ -476,7 +476,7 @@ def main():
         
         csv = download_data.to_csv(index=False)
         st.download_button(
-            label="📥 Download Filtered Data (CSV)",
+            label="Download Filtered Data (CSV)",
             data=csv,
             file_name=f"drought_data_filtered_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv"
@@ -486,7 +486,7 @@ def main():
         # Download summary
         summary_csv = display_summary.to_csv(index=False)
         st.download_button(
-            label="📥 Download Summary Data (CSV)",
+            label="Download Summary Data (CSV)",
             data=summary_csv,
             file_name=f"drought_summary_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv"
