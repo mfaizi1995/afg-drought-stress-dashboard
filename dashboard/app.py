@@ -180,8 +180,19 @@ def main():
         min_value=0,
         max_value=100,
         value=30,
-        help="Adjust to flag districts below your chosen CDI threshold. Interpretation: 0-10 Extreme Drought | 10-20 Severe | 20-30 Moderate | 30-40 Mild | 40-50 Near Normal | 50+ Wet/Favorable"
+        help="Adjust to flag districts below your chosen CDI threshold."
     )
+    
+    # CDI Interpretation Guide in sidebar
+    st.sidebar.markdown("""
+    **CDI Interpretation:**
+    - 0–10: Extreme Drought
+    - 10–20: Severe Drought
+    - 20–30: Moderate Drought
+    - 30–40: Mild Drought
+    - 40–50: Near Normal (Dry)
+    - 50+: Wet/Favorable
+    """)
     
     # Filter data (convert lists to tuples for caching)
     filtered_df = filter_data(
@@ -203,7 +214,7 @@ def main():
     latest_date = filtered_df['date'].max()
     latest_data = filtered_df[filtered_df['date'] == latest_date]
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         avg_cdi = latest_data[cdi_column].mean()
@@ -218,9 +229,10 @@ def main():
         severe_count = len(latest_data[latest_data[cdi_column] < drought_threshold])
         total_districts = len(latest_data)
         st.metric(
-            label="Districts in Moderate Drought",
+            label="Districts Below Threshold",
             value=f"{severe_count}",
-            delta=f"of {total_districts} total"
+            delta=f"of {total_districts} total",
+            help=f"Number of districts with CDI below {drought_threshold} (your selected threshold)"
         )
     
     with col3:
@@ -232,6 +244,14 @@ def main():
         )
     
     with col4:
+        avg_tci = latest_data['TCI'].mean()
+        st.metric(
+            label="Avg TCI (Temperature)",
+            value=f"{avg_tci:.1f}",
+            delta="Thermal Condition"
+        )
+    
+    with col5:
         avg_spi = latest_data['SPI'].mean()
         spi_status = "Wet" if avg_spi > 0 else "Dry"
         st.metric(
@@ -242,7 +262,7 @@ def main():
     
     # Drought Alert Box
     if severe_count > 0:
-        st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold} (moderate drought conditions)")
+        st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold}")
         
         # Show affected districts
         affected_districts = latest_data[latest_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
@@ -513,16 +533,6 @@ def main():
     # Footer
     st.markdown("---")
     st.markdown("""
-    ### CDI Interpretation Guide
-    | CDI Range | Interpretation |
-    |-----------|----------------|
-    | 0–10 | Extreme Drought |
-    | 10–20 | Severe Drought |
-    | 20–30 | Moderate Drought |
-    | 30–40 | Mild Drought |
-    | 40–50 | Near Normal (Dry) |
-    | 50+ | Wet/Favorable |
-    
     ### Methodology
     The **Combined Drought Index (CDI)** integrates three satellite-derived indicators:
     - **VCI (Vegetation Condition Index)**: Measures vegetation health relative to historical min/max from MODIS NDVI
