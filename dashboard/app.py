@@ -159,8 +159,8 @@ def main():
         "Drought Alert Threshold (CDI)",
         min_value=0,
         max_value=100,
-        value=20,
-        help="Districts with CDI below this value are flagged as severe drought"
+        value=30,
+        help="Districts with CDI below this value are flagged as moderate drought"
     )
     
     # Filter data
