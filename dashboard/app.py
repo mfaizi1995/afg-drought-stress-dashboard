@@ -48,26 +48,29 @@ def load_geojson():
 
 # Helper functions
 def get_drought_severity(cdi_value):
-    """Classify drought severity based on CDI value."""
-    if cdi_value < 20:
+    """Classify drought severity based on CDI value (matches Notebook 01 interpretation guide)."""
+    if cdi_value < 10:
         return "Extreme Drought"
-    elif cdi_value < 35:
+    elif cdi_value < 20:
         return "Severe Drought"
-    elif cdi_value < 50:
+    elif cdi_value < 30:
         return "Moderate Drought"
-    elif cdi_value < 65:
+    elif cdi_value < 40:
         return "Mild Drought"
+    elif cdi_value < 50:
+        return "Near Normal (Dry)"
     else:
-        return "No Drought"
+        return "Wet/Favorable"
 
 def get_severity_color(severity):
     """Get color for drought severity."""
     colors = {
-        "Extreme Drought": "#8B0000",
-        "Severe Drought": "#FF4500",
-        "Moderate Drought": "#FFA500",
-        "Mild Drought": "#FFD700",
-        "No Drought": "#228B22"
+        "Extreme Drought": "#8B0000",      # Dark red
+        "Severe Drought": "#FF4500",       # Orange red
+        "Moderate Drought": "#FFA500",     # Orange
+        "Mild Drought": "#FFD700",         # Gold
+        "Near Normal (Dry)": "#ADFF2F",    # Green yellow
+        "Wet/Favorable": "#228B22"         # Forest green
     }
     return colors.get(severity, "#808080")
 
@@ -194,7 +197,7 @@ def main():
         severe_count = len(latest_data[latest_data[cdi_column] < drought_threshold])
         total_districts = len(latest_data)
         st.metric(
-            label="Districts in Severe Drought",
+            label="Districts in Moderate Drought",
             value=f"{severe_count}",
             delta=f"of {total_districts} total"
         )
@@ -218,7 +221,7 @@ def main():
     
     # Drought Alert Box
     if severe_count > 0:
-        st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold} (severe drought conditions)")
+        st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold} (moderate drought conditions)")
         
         # Show affected districts
         affected_districts = latest_data[latest_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
@@ -254,12 +257,13 @@ def main():
                 featureidkey="properties.ADM2_CODE",
                 color=cdi_column,
                 color_continuous_scale=[
-                    [0, "#8B0000"],      # Extreme drought (dark red)
-                    [0.2, "#FF4500"],    # Severe drought (orange red)
-                    [0.35, "#FFA500"],   # Moderate drought (orange)
-                    [0.5, "#FFD700"],    # Mild drought (gold)
-                    [0.65, "#90EE90"],   # Near normal (light green)
-                    [1, "#228B22"]       # Good conditions (forest green)
+                    [0, "#8B0000"],      # Extreme drought (0-10)
+                    [0.1, "#FF4500"],    # Severe drought (10-20)
+                    [0.2, "#FFA500"],    # Moderate drought (20-30)
+                    [0.3, "#FFD700"],    # Mild drought (30-40)
+                    [0.4, "#ADFF2F"],    # Near normal (40-50)
+                    [0.5, "#90EE90"],    # Wet conditions (50+)
+                    [1, "#228B22"]       # Very wet conditions
                 ],
                 range_color=[0, 100],
                 mapbox_style="carto-positron",
