@@ -530,7 +530,7 @@ def main():
     - **SPI (Standardized Precipitation Index)**: Measures precipitation anomalies using a 3-month window from CHIRPS data
     
     **CDI** uses equal weighting (⅓ VCI + ⅓ TCI + ⅓ SPI). **CDI_alt** applies alternative weights (0.4 VCI + 0.4 TCI + 0.2 SPI) 
-    to test robustness. This project does not aim to determine optimal weights—the alternative calculation demonstrates 
+    to test robustness. This project does not aim to determine optimal weights, the alternative calculation demonstrates 
     that findings remain consistent across different weighting schemes.
     
     ### Data Sources
@@ -542,7 +542,7 @@ def main():
     ### About
     This dashboard monitors drought conditions across Afghanistan's 400+ districts using satellite-derived indices. 
     All data processing, indicator construction, and validation workflows are documented in the project's Jupyter notebooks. 
-    For methodology details and source code, see the [GitHub repository](https://github.com/mastoorahfaizi/afg-drought-stress-dashboard).
+    For methodology details and source code, see the [GitHub repository](https://github.com/mfaizi1995/afg-drought-stress-dashboard).
     """)
 
 if __name__ == "__main__":
