@@ -87,6 +87,73 @@ def get_severity_color(severity):
     }
     return colors.get(severity, "#808080")
 
+def get_vci_descriptor(vci_value):
+    """Get VCI condition descriptor."""
+    if vci_value < 10:
+        return "Extreme vegetation stress"
+    elif vci_value < 20:
+        return "Severe vegetation stress"
+    elif vci_value < 35:
+        return "Moderate vegetation stress"
+    elif vci_value < 50:
+        return "Mild vegetation stress"
+    elif vci_value < 65:
+        return "Normal conditions"
+    elif vci_value < 80:
+        return "Good vegetation"
+    elif vci_value < 90:
+        return "Very good vegetation"
+    else:
+        return "Excellent vegetation"
+
+def get_tci_descriptor(tci_value):
+    """Get TCI condition descriptor."""
+    if tci_value < 10:
+        return "Extreme heat stress"
+    elif tci_value < 20:
+        return "Severe heat stress"
+    elif tci_value < 35:
+        return "Moderate heat stress"
+    elif tci_value < 50:
+        return "Mild heat stress"
+    elif tci_value < 65:
+        return "Normal conditions"
+    elif tci_value < 80:
+        return "Mild cool conditions"
+    elif tci_value < 90:
+        return "Moderate cool conditions"
+    else:
+        return "Extreme cool conditions"
+
+def get_spi_descriptor(spi_value):
+    """Get SPI condition descriptor."""
+    if spi_value <= -2.0:
+        return "Extremely dry"
+    elif spi_value <= -1.5:
+        return "Severely dry"
+    elif spi_value <= -1.0:
+        return "Moderately dry"
+    elif spi_value <= -0.5:
+        return "Mildly dry"
+    elif spi_value <= 0.5:
+        return "Near normal"
+    elif spi_value <= 1.0:
+        return "Mildly wet"
+    elif spi_value <= 1.5:
+        return "Moderately wet"
+    elif spi_value <= 2.0:
+        return "Severely wet"
+    else:
+        return "Extremely wet"
+
+def format_year_month(year_month_str):
+    """Convert '2025-11' to 'Nov 2025'."""
+    try:
+        dt = datetime.strptime(year_month_str, '%Y-%m')
+        return dt.strftime('%b %Y')
+    except:
+        return year_month_str
+
 @st.cache_data
 def filter_data(_df, provinces=None, districts=None, date_range=None):
     """Filter the dataframe based on user selections. Cached for performance."""
@@ -207,29 +274,25 @@ def main():
         filtered_df = filtered_df.copy()
         filtered_df['year_month'] = filtered_df['date'].dt.to_period('M').astype(str)
     
-    # ==================== MONTH SELECTOR ====================
-    # Date slider - shared by conditions panel and map
+    # Get unique months for slider (used later)
     unique_months = sorted(filtered_df['year_month'].unique())
-    if len(unique_months) > 0:
-        selected_month_idx = st.select_slider(
-            "Select Month",
-            options=range(len(unique_months)),
-            value=len(unique_months) - 1,
-            format_func=lambda x: unique_months[x]
-        )
-        selected_month = unique_months[selected_month_idx]
-        month_data = filtered_df[filtered_df['year_month'] == selected_month]
-    else:
-        selected_month = "N/A"
-        month_data = filtered_df
     
     # ==================== CONDITIONS PANEL ====================
-    st.header(f"Conditions for {selected_month}")
+    # Use latest month for conditions panel
+    if len(unique_months) > 0:
+        latest_month = unique_months[-1]
+        latest_month_data = filtered_df[filtered_df['year_month'] == latest_month]
+        latest_month_display = format_year_month(latest_month)
+    else:
+        latest_month_display = "N/A"
+        latest_month_data = filtered_df
+    
+    st.header(f"Latest Conditions — {latest_month_display}")
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        avg_cdi = month_data[cdi_column].mean()
+        avg_cdi = latest_month_data[cdi_column].mean()
         severity = get_drought_severity(avg_cdi)
         st.metric(
             label="National Avg CDI",
@@ -238,8 +301,8 @@ def main():
         )
     
     with col2:
-        severe_count = len(month_data[month_data[cdi_column] < drought_threshold])
-        total_districts = len(month_data)
+        severe_count = len(latest_month_data[latest_month_data[cdi_column] < drought_threshold])
+        total_districts = len(latest_month_data)
         st.metric(
             label="Districts Below Threshold",
             value=f"{severe_count}",
@@ -248,28 +311,30 @@ def main():
         )
     
     with col3:
-        avg_vci = month_data['VCI'].mean()
+        avg_vci = latest_month_data['VCI'].mean()
+        vci_descriptor = get_vci_descriptor(avg_vci)
         st.metric(
             label="Avg VCI",
             value=f"{avg_vci:.1f}",
-            delta="Vegetation Condition"
+            delta=vci_descriptor
         )
     
     with col4:
-        avg_tci = month_data['TCI'].mean()
+        avg_tci = latest_month_data['TCI'].mean()
+        tci_descriptor = get_tci_descriptor(avg_tci)
         st.metric(
             label="Avg TCI",
             value=f"{avg_tci:.1f}",
-            delta="Thermal Condition"
+            delta=tci_descriptor
         )
     
     with col5:
-        avg_spi = month_data['SPI'].mean()
-        spi_status = "Wet" if avg_spi > 0 else "Dry"
+        avg_spi = latest_month_data['SPI'].mean()
+        spi_descriptor = get_spi_descriptor(avg_spi)
         st.metric(
             label="Avg SPI",
             value=f"{avg_spi:.2f}",
-            delta=spi_status
+            delta=spi_descriptor
         )
     
     # Drought Alert Box
@@ -277,14 +342,24 @@ def main():
         st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold}")
         
         # Show affected districts
-        affected_districts = month_data[month_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
+        affected_districts = latest_month_data[latest_month_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
         with st.expander(f"View {severe_count} Affected Districts"):
             st.dataframe(affected_districts.rename(columns={cdi_column: 'CDI Value'}), use_container_width=True)
     
     # ==================== INTERACTIVE MAP PANEL ====================
-    st.header(f"Drought Map — {selected_month}")
+    st.header("Interactive Drought Map")
     
+    # Month slider for map
     if len(unique_months) > 0:
+        selected_month_idx = st.select_slider(
+            "Select Month",
+            options=range(len(unique_months)),
+            value=len(unique_months) - 1,
+            format_func=lambda x: format_year_month(unique_months[x])
+        )
+        selected_month = unique_months[selected_month_idx]
+        selected_month_display = format_year_month(selected_month)
+        month_data = filtered_df[filtered_df['year_month'] == selected_month]
         # Create choropleth map
         if geojson is not None and not month_data.empty:
             # Only pass necessary columns to reduce data transfer
@@ -310,7 +385,7 @@ def main():
             fig_map.update_layout(
                 margin={"r": 0, "t": 30, "l": 0, "b": 0},
                 height=500,
-                title=f"Drought Conditions - {selected_month}"
+                title=f"Drought Conditions — {selected_month_display}"
             )
             st.plotly_chart(fig_map, use_container_width=True)
         elif not month_data.empty:
@@ -324,7 +399,7 @@ def main():
                 color=cdi_column,
                 color_continuous_scale='RdYlGn',
                 range_color=[0, 100],
-                title=f"CDI by District - {selected_month}",
+                title=f"CDI by District — {selected_month_display}",
                 hover_data={'VCI': ':.1f', 'TCI': ':.1f', 'SPI': ':.2f'}
             )
             fig_bar.update_layout(height=500, xaxis_tickangle=-45)
