@@ -302,12 +302,10 @@ def main():
     with col1:
         avg_cdi = selected_month_data[cdi_column].mean()
         severity = get_drought_severity(avg_cdi)
-        # Down arrow for drought conditions (CDI < 50), up for favorable
-        cdi_delta = severity if avg_cdi >= 50 else f"-{severity}"
         st.metric(
             label="National Avg CDI",
             value=f"{avg_cdi:.1f}",
-            delta=cdi_delta,
+            delta=severity,
             delta_color="off"
         )
     
@@ -316,45 +314,37 @@ def main():
         total_districts = len(selected_month_data)
         st.metric(
             label="Districts Below Threshold",
-            value=f"{severe_count}",
-            delta=f"of {total_districts} total",
-            delta_color="off",
+            value=f"{severe_count} of {total_districts}",
             help=f"Number of districts with CDI below {drought_threshold} (your selected threshold)"
         )
     
     with col3:
         avg_vci = selected_month_data['VCI'].mean()
         vci_descriptor = get_vci_descriptor(avg_vci)
-        # Down arrow for vegetation stress (VCI < 50), up for good vegetation
-        vci_delta = vci_descriptor if avg_vci >= 50 else f"-{vci_descriptor}"
         st.metric(
             label="Avg VCI",
             value=f"{avg_vci:.1f}",
-            delta=vci_delta,
+            delta=vci_descriptor,
             delta_color="off"
         )
     
     with col4:
         avg_tci = selected_month_data['TCI'].mean()
         tci_descriptor = get_tci_descriptor(avg_tci)
-        # Down arrow for heat stress (TCI < 50), up for cooler conditions
-        tci_delta = tci_descriptor if avg_tci >= 50 else f"-{tci_descriptor}"
         st.metric(
             label="Avg TCI",
             value=f"{avg_tci:.1f}",
-            delta=tci_delta,
+            delta=tci_descriptor,
             delta_color="off"
         )
     
     with col5:
         avg_spi = selected_month_data['SPI'].mean()
         spi_descriptor = get_spi_descriptor(avg_spi)
-        # Down arrow for dry conditions (SPI < 0), up for wet
-        spi_delta = spi_descriptor if avg_spi >= 0 else f"-{spi_descriptor}"
         st.metric(
             label="Avg SPI",
             value=f"{avg_spi:.2f}",
-            delta=spi_delta,
+            delta=spi_descriptor,
             delta_color="off"
         )
     
