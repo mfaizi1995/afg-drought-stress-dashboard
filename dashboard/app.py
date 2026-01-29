@@ -115,6 +115,10 @@ def main():
     # Load data
     try:
         indicators_df, summary_df, geojson = get_data()
+        # Ensure year_month column exists (handles cached data)
+        if 'year_month' not in indicators_df.columns:
+            indicators_df = indicators_df.copy()
+            indicators_df['year_month'] = indicators_df['date'].dt.to_period('M').astype(str)
     except Exception as e:
         st.error(f"Error loading data: {e}")
         st.info("Please ensure the data files are in the correct location.")
