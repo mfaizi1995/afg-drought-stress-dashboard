@@ -207,17 +207,29 @@ def main():
         filtered_df = filtered_df.copy()
         filtered_df['year_month'] = filtered_df['date'].dt.to_period('M').astype(str)
     
-    # ==================== CURRENT CONDITIONS PANEL ====================
-    st.header("Current Conditions")
+    # ==================== MONTH SELECTOR ====================
+    # Date slider - shared by conditions panel and map
+    unique_months = sorted(filtered_df['year_month'].unique())
+    if len(unique_months) > 0:
+        selected_month_idx = st.select_slider(
+            "Select Month",
+            options=range(len(unique_months)),
+            value=len(unique_months) - 1,
+            format_func=lambda x: unique_months[x]
+        )
+        selected_month = unique_months[selected_month_idx]
+        month_data = filtered_df[filtered_df['year_month'] == selected_month]
+    else:
+        selected_month = "N/A"
+        month_data = filtered_df
     
-    # Get latest date data
-    latest_date = filtered_df['date'].max()
-    latest_data = filtered_df[filtered_df['date'] == latest_date]
+    # ==================== CONDITIONS PANEL ====================
+    st.header(f"Conditions for {selected_month}")
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        avg_cdi = latest_data[cdi_column].mean()
+        avg_cdi = month_data[cdi_column].mean()
         severity = get_drought_severity(avg_cdi)
         st.metric(
             label="National Avg CDI",
@@ -226,8 +238,8 @@ def main():
         )
     
     with col2:
-        severe_count = len(latest_data[latest_data[cdi_column] < drought_threshold])
-        total_districts = len(latest_data)
+        severe_count = len(month_data[month_data[cdi_column] < drought_threshold])
+        total_districts = len(month_data)
         st.metric(
             label="Districts Below Threshold",
             value=f"{severe_count}",
@@ -236,26 +248,26 @@ def main():
         )
     
     with col3:
-        avg_vci = latest_data['VCI'].mean()
+        avg_vci = month_data['VCI'].mean()
         st.metric(
-            label="Avg VCI (Vegetation)",
+            label="Avg VCI",
             value=f"{avg_vci:.1f}",
             delta="Vegetation Condition"
         )
     
     with col4:
-        avg_tci = latest_data['TCI'].mean()
+        avg_tci = month_data['TCI'].mean()
         st.metric(
-            label="Avg TCI (Temperature)",
+            label="Avg TCI",
             value=f"{avg_tci:.1f}",
             delta="Thermal Condition"
         )
     
     with col5:
-        avg_spi = latest_data['SPI'].mean()
+        avg_spi = month_data['SPI'].mean()
         spi_status = "Wet" if avg_spi > 0 else "Dry"
         st.metric(
-            label="Avg SPI (Precipitation)",
+            label="Avg SPI",
             value=f"{avg_spi:.2f}",
             delta=spi_status
         )
@@ -265,31 +277,19 @@ def main():
         st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold}")
         
         # Show affected districts
-        affected_districts = latest_data[latest_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
+        affected_districts = month_data[month_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
         with st.expander(f"View {severe_count} Affected Districts"):
             st.dataframe(affected_districts.rename(columns={cdi_column: 'CDI Value'}), use_container_width=True)
     
     # ==================== INTERACTIVE MAP PANEL ====================
-    st.header("Interactive Drought Map")
+    st.header(f"Drought Map — {selected_month}")
     
-    # Date slider for map - use precomputed year_month for speed
-    unique_months = sorted(filtered_df['year_month'].unique())
     if len(unique_months) > 0:
-        selected_month_idx = st.select_slider(
-            "Select Month",
-            options=range(len(unique_months)),
-            value=len(unique_months) - 1,
-            format_func=lambda x: unique_months[x]
-        )
-        
-        selected_month = unique_months[selected_month_idx]
-        map_data = filtered_df[filtered_df['year_month'] == selected_month]
-        
         # Create choropleth map
-        if geojson is not None and not map_data.empty:
+        if geojson is not None and not month_data.empty:
             # Only pass necessary columns to reduce data transfer
             map_cols = ['ADM2_CODE', 'ADM2_NAME', cdi_column, 'VCI', 'TCI', 'SPI']
-            map_data_slim = map_data[map_cols].copy()
+            map_data_slim = month_data[map_cols].copy()
             
             # District-level choropleth map
             fig_map = px.choropleth_mapbox(
@@ -313,12 +313,12 @@ def main():
                 title=f"Drought Conditions - {selected_month}"
             )
             st.plotly_chart(fig_map, use_container_width=True)
-        elif not map_data.empty:
+        elif not month_data.empty:
             # Fallback: bar chart if no GeoJSON
             st.info("Creating bar chart visualization (GeoJSON boundaries not available)")
             
             fig_bar = px.bar(
-                map_data.sort_values(cdi_column),
+                month_data.sort_values(cdi_column),
                 x='ADM2_NAME',
                 y=cdi_column,
                 color=cdi_column,
