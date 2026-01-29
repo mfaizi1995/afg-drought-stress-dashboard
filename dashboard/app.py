@@ -274,25 +274,33 @@ def main():
         filtered_df = filtered_df.copy()
         filtered_df['year_month'] = filtered_df['date'].dt.to_period('M').astype(str)
     
-    # Get unique months for slider (used later)
+    # Get unique months for slider
     unique_months = sorted(filtered_df['year_month'].unique())
     
-    # ==================== CONDITIONS PANEL ====================
-    # Use latest month for conditions panel
-    if len(unique_months) > 0:
-        latest_month = unique_months[-1]
-        latest_month_data = filtered_df[filtered_df['year_month'] == latest_month]
-        latest_month_display = format_year_month(latest_month)
-    else:
-        latest_month_display = "N/A"
-        latest_month_data = filtered_df
+    # Initialize session state for month selection (defaults to latest month)
+    if 'selected_month_idx' not in st.session_state:
+        st.session_state.selected_month_idx = len(unique_months) - 1 if unique_months else 0
     
-    st.header(f"Latest Conditions — {latest_month_display}")
+    # Ensure index is within bounds (in case filters change available months)
+    if st.session_state.selected_month_idx >= len(unique_months):
+        st.session_state.selected_month_idx = len(unique_months) - 1 if unique_months else 0
+    
+    # ==================== CONDITIONS PANEL ====================
+    # Use selected month from slider for conditions panel
+    if len(unique_months) > 0:
+        selected_month = unique_months[st.session_state.selected_month_idx]
+        selected_month_data = filtered_df[filtered_df['year_month'] == selected_month]
+        selected_month_display = format_year_month(selected_month)
+    else:
+        selected_month_display = "N/A"
+        selected_month_data = filtered_df
+    
+    st.header(f"Conditions — {selected_month_display}")
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        avg_cdi = latest_month_data[cdi_column].mean()
+        avg_cdi = selected_month_data[cdi_column].mean()
         severity = get_drought_severity(avg_cdi)
         st.metric(
             label="National Avg CDI",
@@ -301,8 +309,8 @@ def main():
         )
     
     with col2:
-        severe_count = len(latest_month_data[latest_month_data[cdi_column] < drought_threshold])
-        total_districts = len(latest_month_data)
+        severe_count = len(selected_month_data[selected_month_data[cdi_column] < drought_threshold])
+        total_districts = len(selected_month_data)
         st.metric(
             label="Districts Below Threshold",
             value=f"{severe_count}",
@@ -311,7 +319,7 @@ def main():
         )
     
     with col3:
-        avg_vci = latest_month_data['VCI'].mean()
+        avg_vci = selected_month_data['VCI'].mean()
         vci_descriptor = get_vci_descriptor(avg_vci)
         st.metric(
             label="Avg VCI",
@@ -320,7 +328,7 @@ def main():
         )
     
     with col4:
-        avg_tci = latest_month_data['TCI'].mean()
+        avg_tci = selected_month_data['TCI'].mean()
         tci_descriptor = get_tci_descriptor(avg_tci)
         st.metric(
             label="Avg TCI",
@@ -329,7 +337,7 @@ def main():
         )
     
     with col5:
-        avg_spi = latest_month_data['SPI'].mean()
+        avg_spi = selected_month_data['SPI'].mean()
         spi_descriptor = get_spi_descriptor(avg_spi)
         st.metric(
             label="Avg SPI",
@@ -342,7 +350,7 @@ def main():
         st.warning(f"**DROUGHT ALERT**: {severe_count} districts have CDI below {drought_threshold}")
         
         # Show affected districts
-        affected_districts = latest_month_data[latest_month_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
+        affected_districts = selected_month_data[selected_month_data[cdi_column] < drought_threshold][['ADM2_NAME', 'ADM1_NAME', cdi_column]].sort_values(cdi_column)
         with st.expander(f"View {severe_count} Affected Districts"):
             st.dataframe(affected_districts.rename(columns={cdi_column: 'CDI Value'}), use_container_width=True)
     
@@ -354,7 +362,8 @@ def main():
         selected_month_idx = st.select_slider(
             "Select Month",
             options=range(len(unique_months)),
-            value=len(unique_months) - 1,
+            value=st.session_state.selected_month_idx,
+            key='selected_month_idx',
             format_func=lambda x: format_year_month(unique_months[x])
         )
         selected_month = unique_months[selected_month_idx]
