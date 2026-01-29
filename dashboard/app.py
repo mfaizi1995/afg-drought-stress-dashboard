@@ -28,6 +28,8 @@ def load_drought_indicators():
     """Load the main drought indicators dataset."""
     df = pd.read_csv(PROCESSED_DIR / "afg_drought_indicators_2000_2025.csv")
     df['date'] = pd.to_datetime(df['date'])
+    # Precompute year-month for faster filtering
+    df['year_month'] = df['date'].dt.to_period('M').astype(str)
     return df
 
 @st.cache_data
@@ -39,11 +41,16 @@ def load_district_summary():
 
 @st.cache_data
 def load_geojson():
-    """Load the district boundaries GeoJSON."""
+    """Load the district boundaries GeoJSON with minimal properties."""
     geojson_path = RAW_DIR / "afg_district_lookup.geojson"
     if geojson_path.exists():
         with open(geojson_path, 'r') as f:
-            return json.load(f)
+            geojson = json.load(f)
+        # Simplify: keep only essential properties to reduce size
+        for feature in geojson.get('features', []):
+            props = feature.get('properties', {})
+            feature['properties'] = {'ADM2_CODE': props.get('ADM2_CODE')}
+        return geojson
     return None
 
 # Helper functions
@@ -74,22 +81,22 @@ def get_severity_color(severity):
     }
     return colors.get(severity, "#808080")
 
-def filter_data(df, provinces=None, districts=None, date_range=None, cdi_column='CDI'):
-    """Filter the dataframe based on user selections."""
-    filtered = df.copy()
+@st.cache_data
+def filter_data(_df, provinces=None, districts=None, date_range=None):
+    """Filter the dataframe based on user selections. Cached for performance."""
+    mask = pd.Series(True, index=_df.index)
     
     if provinces and len(provinces) > 0:
-        filtered = filtered[filtered['ADM1_NAME'].isin(provinces)]
+        mask &= _df['ADM1_NAME'].isin(provinces)
     
     if districts and len(districts) > 0:
-        filtered = filtered[filtered['ADM2_NAME'].isin(districts)]
+        mask &= _df['ADM2_NAME'].isin(districts)
     
-    if date_range:
-        start_date, end_date = date_range
-        filtered = filtered[(filtered['date'] >= pd.to_datetime(start_date)) & 
-                           (filtered['date'] <= pd.to_datetime(end_date))]
+    if date_range and len(date_range) == 2:
+        start_date, end_date = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
+        mask &= (_df['date'] >= start_date) & (_df['date'] <= end_date)
     
-    return filtered
+    return _df[mask]
 
 # Load data
 @st.cache_data
@@ -166,13 +173,12 @@ def main():
         help="Districts with CDI below this value are flagged as moderate drought"
     )
     
-    # Filter data
+    # Filter data (convert lists to tuples for caching)
     filtered_df = filter_data(
         indicators_df,
-        provinces=selected_provinces if selected_provinces else None,
-        districts=selected_districts if selected_districts else None,
-        date_range=date_range if len(date_range) == 2 else None,
-        cdi_column=cdi_column
+        provinces=tuple(selected_provinces) if selected_provinces else None,
+        districts=tuple(selected_districts) if selected_districts else None,
+        date_range=tuple(date_range) if len(date_range) == 2 else None
     )
     
     # ==================== CURRENT CONDITIONS PANEL ====================
@@ -231,12 +237,9 @@ def main():
     # ==================== INTERACTIVE MAP PANEL ====================
     st.header("Interactive Drought Map")
     
-    # Date slider for map
-    available_dates = sorted(filtered_df['date'].unique())
-    if len(available_dates) > 0:
-        date_options = [d.strftime('%Y-%m') for d in pd.to_datetime(available_dates)]
-        unique_months = list(dict.fromkeys(date_options))
-        
+    # Date slider for map - use precomputed year_month for speed
+    unique_months = sorted(filtered_df['year_month'].unique())
+    if len(unique_months) > 0:
         selected_month_idx = st.select_slider(
             "Select Month",
             options=range(len(unique_months)),
@@ -245,7 +248,7 @@ def main():
         )
         
         selected_month = unique_months[selected_month_idx]
-        map_data = filtered_df[filtered_df['date'].dt.strftime('%Y-%m') == selected_month]
+        map_data = filtered_df[filtered_df['year_month'] == selected_month]
         
         # Create choropleth map
         if geojson is not None and not map_data.empty:
