@@ -41,15 +41,27 @@ def load_district_summary():
 
 @st.cache_data
 def load_geojson():
-    """Load the district boundaries GeoJSON with minimal properties."""
+    """Load the district boundaries GeoJSON with simplified geometry."""
     geojson_path = RAW_DIR / "afg_district_lookup.geojson"
     if geojson_path.exists():
         with open(geojson_path, 'r') as f:
             geojson = json.load(f)
-        # Simplify: keep only essential properties to reduce size
+        
+        def simplify_coords(coords, precision=3):
+            """Round coordinates to reduce precision and file size."""
+            if isinstance(coords[0], list):
+                return [simplify_coords(c, precision) for c in coords]
+            return [round(coords[0], precision), round(coords[1], precision)]
+        
+        # Simplify geometry and keep only essential properties
         for feature in geojson.get('features', []):
             props = feature.get('properties', {})
             feature['properties'] = {'ADM2_CODE': props.get('ADM2_CODE')}
+            # Simplify coordinates
+            geom = feature.get('geometry', {})
+            if 'coordinates' in geom:
+                geom['coordinates'] = simplify_coords(geom['coordinates'])
+        
         return geojson
     return None
 
@@ -261,9 +273,13 @@ def main():
         
         # Create choropleth map
         if geojson is not None and not map_data.empty:
+            # Only pass necessary columns to reduce data transfer
+            map_cols = ['ADM2_CODE', 'ADM2_NAME', cdi_column, 'VCI', 'TCI', 'SPI']
+            map_data_slim = map_data[map_cols].copy()
+            
             # District-level choropleth map
             fig_map = px.choropleth_mapbox(
-                map_data,
+                map_data_slim,
                 geojson=geojson,
                 locations='ADM2_CODE',
                 featureidkey="properties.ADM2_CODE",
