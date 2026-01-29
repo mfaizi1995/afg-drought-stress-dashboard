@@ -185,6 +185,11 @@ def main():
         date_range=tuple(date_range) if len(date_range) == 2 else None
     )
     
+    # Ensure year_month column exists in filtered data
+    if 'year_month' not in filtered_df.columns:
+        filtered_df = filtered_df.copy()
+        filtered_df['year_month'] = filtered_df['date'].dt.to_period('M').astype(str)
+    
     # ==================== CURRENT CONDITIONS PANEL ====================
     st.header("Current Conditions")
     
