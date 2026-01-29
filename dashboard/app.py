@@ -64,24 +64,15 @@ def get_drought_severity(cdi_value):
 
 def get_severity_color(severity):
     """Get color for drought severity."""
-    import matplotlib
-    import matplotlib.cm as cm
-    import matplotlib.colors as mcolors
-    # Map severity to a CDI value midpoint for color mapping
-    severity_cdi = {
-        "Extreme Drought": 5,
-        "Severe Drought": 15,
-        "Moderate Drought": 25,
-        "Mild Drought": 35,
-        "Near Normal (Dry)": 45,
-        "Wet/Favorable": 75
+    colors = {
+        "Extreme Drought": "#8B0000",      # Dark red
+        "Severe Drought": "#FF4500",       # Orange red
+        "Moderate Drought": "#FFA500",     # Orange
+        "Mild Drought": "#FFD700",         # Gold
+        "Near Normal (Dry)": "#ADFF2F",    # Green yellow
+        "Wet/Favorable": "#228B22"         # Forest green
     }
-    cdi_value = severity_cdi.get(severity, 50)
-    norm = mcolors.Normalize(vmin=0, vmax=100)
-    cmap = cm.get_cmap('RdYlGn')
-    rgba = cmap(norm(cdi_value))
-    # Convert RGBA to hex
-    return mcolors.to_hex(rgba)
+    return colors.get(severity, "#808080")
 
 def filter_data(df, provinces=None, districts=None, date_range=None, cdi_column='CDI'):
     """Filter the dataframe based on user selections."""
@@ -265,15 +256,7 @@ def main():
                 locations='ADM2_CODE',
                 featureidkey="properties.ADM2_CODE",
                 color=cdi_column,
-                color_continuous_scale=[
-                    [0, "#8B0000"],      # Extreme drought (0-10)
-                    [0.1, "#FF4500"],    # Severe drought (10-20)
-                    [0.2, "#FFA500"],    # Moderate drought (20-30)
-                    [0.3, "#FFD700"],    # Mild drought (30-40)
-                    [0.4, "#ADFF2F"],    # Near normal (40-50)
-                    [0.5, "#90EE90"],    # Wet conditions (50+)
-                    [1, "#228B22"]       # Very wet conditions
-                ],
+                color_continuous_scale="RdYlGn",
                 range_color=[0, 100],
                 mapbox_style="carto-positron",
                 zoom=4.5,
@@ -411,31 +394,29 @@ def main():
     ].copy()
     
     if not historical_data.empty:
-        # Create comparison chart
-        fig_historical = go.Figure()
-        
-        # Add bars for each year
-        fig_historical.add_trace(go.Bar(
-            x=historical_data['year'],
-            y=historical_data[cdi_column],
-            marker_color=historical_data[cdi_column].apply(
-                lambda x: get_severity_color(get_drought_severity(x))
-            ),
+        # Create comparison chart using continuous colorscale
+        fig_historical = px.bar(
+            historical_data,
+            x='year',
+            y=cdi_column,
+            color=cdi_column,
+            color_continuous_scale='RdYlGn',
+            range_color=[0, 100],
             text=historical_data[cdi_column].round(1),
-            textposition='outside',
-            name='CDI'
-        ))
+            title=f"Historical CDI Comparison - {datetime(2000, comparison_month, 1).strftime('%B')} - {comparison_district}"
+        )
+        
+        fig_historical.update_traces(textposition='outside')
         
         # Add threshold line
         fig_historical.add_hline(y=drought_threshold, line_dash="dash", line_color="red",
                                 annotation_text=f"Drought Threshold ({drought_threshold})")
         
         fig_historical.update_layout(
-            title=f"Historical CDI Comparison - {datetime(2000, comparison_month, 1).strftime('%B')} - {comparison_district}",
             xaxis_title="Year",
             yaxis_title=f"CDI Value ({cdi_column})",
             height=400,
-            showlegend=False
+            showlegend=True
         )
         
         st.plotly_chart(fig_historical, use_container_width=True)
