@@ -355,8 +355,6 @@ def main():
             st.dataframe(affected_districts.rename(columns={cdi_column: 'CDI Value'}), use_container_width=True)
     
     # ==================== INTERACTIVE MAP PANEL ====================
-    st.header("Interactive Drought Map")
-    
     # Month slider for map
     if len(unique_months) > 0:
         selected_month_idx = st.select_slider(
@@ -369,6 +367,8 @@ def main():
         selected_month = unique_months[selected_month_idx]
         selected_month_display = format_year_month(selected_month)
         month_data = filtered_df[filtered_df['year_month'] == selected_month]
+        
+        st.header("Interactive Drought Map")
         # Create choropleth map
         if geojson is not None and not month_data.empty:
             # Only pass necessary columns to reduce data transfer
