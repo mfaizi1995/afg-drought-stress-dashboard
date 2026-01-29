@@ -137,7 +137,7 @@ def main():
     cdi_column = st.sidebar.radio(
         "Select CDI Measure",
         options=['CDI', 'CDI_alt'],
-        help="CDI: Combined Drought Index, CDI_alt: Alternative calculation"
+        help="CDI: Equal weighting (⅓ VCI + ⅓ TCI + ⅓ SPI). CDI_alt: Alternative weighting (0.4 VCI + 0.4 TCI + 0.2 SPI) used to check robustness of results."
     )
     
     # Date range selector
@@ -180,7 +180,7 @@ def main():
         min_value=0,
         max_value=100,
         value=30,
-        help="Districts with CDI below this value are flagged as moderate drought"
+        help="Adjust to flag districts below your chosen CDI threshold. Interpretation: 0-10 Extreme Drought | 10-20 Severe | 20-30 Moderate | 30-40 Mild | 40-50 Near Normal | 50+ Wet/Favorable"
     )
     
     # Filter data (convert lists to tuples for caching)
@@ -513,13 +513,36 @@ def main():
     # Footer
     st.markdown("---")
     st.markdown("""
-    **Data Sources**: 
-    - VCI/TCI derived from MODIS satellite imagery
-    - SPI calculated from CHIRPS precipitation data
-    - CDI combines VCI, TCI, and SPI indices
+    ### CDI Interpretation Guide
+    | CDI Range | Interpretation |
+    |-----------|----------------|
+    | 0–10 | Extreme Drought |
+    | 10–20 | Severe Drought |
+    | 20–30 | Moderate Drought |
+    | 30–40 | Mild Drought |
+    | 40–50 | Near Normal (Dry) |
+    | 50+ | Wet/Favorable |
     
-    **About**: This dashboard monitors drought conditions across Afghanistan's districts using satellite-derived vegetation, 
-    temperature, and precipitation indices from 2000-2025.
+    ### Methodology
+    The **Combined Drought Index (CDI)** integrates three satellite-derived indicators:
+    - **VCI (Vegetation Condition Index)**: Measures vegetation health relative to historical min/max from MODIS NDVI
+    - **TCI (Temperature Condition Index)**: Measures thermal stress relative to historical min/max from MODIS LST
+    - **SPI (Standardized Precipitation Index)**: Measures precipitation anomalies using a 3-month window from CHIRPS data
+    
+    **CDI** uses equal weighting (⅓ VCI + ⅓ TCI + ⅓ SPI). **CDI_alt** applies alternative weights (0.4 VCI + 0.4 TCI + 0.2 SPI) 
+    to test robustness. This project does not aim to determine optimal weights—the alternative calculation demonstrates 
+    that findings remain consistent across different weighting schemes.
+    
+    ### Data Sources
+    - **Vegetation & Temperature**: MODIS Terra (MOD13A2 NDVI, MOD11A2 LST) via Google Earth Engine
+    - **Precipitation**: CHIRPS daily rainfall aggregated to monthly totals
+    - **Administrative Boundaries**: OCHA Afghanistan district shapefiles (400+ districts, 34 provinces)
+    - **Temporal Coverage**: January 2000 – December 2025 (monthly)
+    
+    ### About
+    This dashboard monitors drought conditions across Afghanistan's 400+ districts using satellite-derived indices. 
+    All data processing, indicator construction, and validation workflows are documented in the project's Jupyter notebooks. 
+    For methodology details and source code, see the [GitHub repository](https://github.com/mastoorahfaizi/afg-drought-stress-dashboard).
     """)
 
 if __name__ == "__main__":
