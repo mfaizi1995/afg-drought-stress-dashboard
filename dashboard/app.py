@@ -314,7 +314,9 @@ def main():
         total_districts = len(selected_month_data)
         st.metric(
             label="Districts Below Threshold",
-            value=f"{severe_count} of {total_districts}",
+            value=f"{severe_count}",
+            delta=f"of {total_districts} total",
+            delta_color="off",
             help=f"Number of districts with CDI below {drought_threshold} (your selected threshold)"
         )
     
