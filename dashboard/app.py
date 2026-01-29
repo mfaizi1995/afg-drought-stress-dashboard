@@ -25,11 +25,17 @@ RAW_DIR = DATA_DIR / "raw"
 # Cache data loading
 @st.cache_data
 def load_drought_indicators():
-    """Load the main drought indicators dataset."""
-    df = pd.read_csv(PROCESSED_DIR / "afg_drought_indicators_2000_2025.csv")
-    df['date'] = pd.to_datetime(df['date'])
-    # Precompute year-month for faster filtering
-    df['year_month'] = df['date'].dt.to_period('M').astype(str)
+    """Load the main drought indicators dataset from Parquet."""
+    parquet_path = PROCESSED_DIR / "afg_drought_indicators_2000_2025.parquet"
+    csv_path = PROCESSED_DIR / "afg_drought_indicators_2000_2025.csv"
+    
+    # Prefer Parquet if available (faster loading)
+    if parquet_path.exists():
+        df = pd.read_parquet(parquet_path)
+    else:
+        df = pd.read_csv(csv_path)
+        df['date'] = pd.to_datetime(df['date'])
+        df['year_month'] = df['date'].dt.to_period('M').astype(str)
     return df
 
 @st.cache_data
@@ -41,28 +47,16 @@ def load_district_summary():
 
 @st.cache_data
 def load_geojson():
-    """Load the district boundaries GeoJSON with simplified geometry."""
-    geojson_path = RAW_DIR / "afg_district_lookup.geojson"
+    """Load the pre-simplified district boundaries GeoJSON."""
+    # Prefer simplified version if available
+    simplified_path = RAW_DIR / "afg_district_lookup_simplified.geojson"
+    original_path = RAW_DIR / "afg_district_lookup.geojson"
+    
+    geojson_path = simplified_path if simplified_path.exists() else original_path
+    
     if geojson_path.exists():
         with open(geojson_path, 'r') as f:
-            geojson = json.load(f)
-        
-        def simplify_coords(coords, precision=3):
-            """Round coordinates to reduce precision and file size."""
-            if isinstance(coords[0], list):
-                return [simplify_coords(c, precision) for c in coords]
-            return [round(coords[0], precision), round(coords[1], precision)]
-        
-        # Simplify geometry and keep only essential properties
-        for feature in geojson.get('features', []):
-            props = feature.get('properties', {})
-            feature['properties'] = {'ADM2_CODE': props.get('ADM2_CODE')}
-            # Simplify coordinates
-            geom = feature.get('geometry', {})
-            if 'coordinates' in geom:
-                geom['coordinates'] = simplify_coords(geom['coordinates'])
-        
-        return geojson
+            return json.load(f)
     return None
 
 # Helper functions
