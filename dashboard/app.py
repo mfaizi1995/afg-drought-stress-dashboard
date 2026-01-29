@@ -64,15 +64,24 @@ def get_drought_severity(cdi_value):
 
 def get_severity_color(severity):
     """Get color for drought severity."""
-    colors = {
-        "Extreme Drought": "#8B0000",      # Dark red
-        "Severe Drought": "#FF4500",       # Orange red
-        "Moderate Drought": "#FFA500",     # Orange
-        "Mild Drought": "#FFD700",         # Gold
-        "Near Normal (Dry)": "#ADFF2F",    # Green yellow
-        "Wet/Favorable": "#228B22"         # Forest green
+    import matplotlib
+    import matplotlib.cm as cm
+    import matplotlib.colors as mcolors
+    # Map severity to a CDI value midpoint for color mapping
+    severity_cdi = {
+        "Extreme Drought": 5,
+        "Severe Drought": 15,
+        "Moderate Drought": 25,
+        "Mild Drought": 35,
+        "Near Normal (Dry)": 45,
+        "Wet/Favorable": 75
     }
-    return colors.get(severity, "#808080")
+    cdi_value = severity_cdi.get(severity, 50)
+    norm = mcolors.Normalize(vmin=0, vmax=100)
+    cmap = cm.get_cmap('RdYlGn')
+    rgba = cmap(norm(cdi_value))
+    # Convert RGBA to hex
+    return mcolors.to_hex(rgba)
 
 def filter_data(df, provinces=None, districts=None, date_range=None, cdi_column='CDI'):
     """Filter the dataframe based on user selections."""
