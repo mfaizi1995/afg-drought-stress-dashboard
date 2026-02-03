@@ -295,7 +295,7 @@ def main():
         selected_month_display = "N/A"
         selected_month_data = filtered_df
     
-    st.header(f"Conditions — {selected_month_display}")
+    st.header(f"Conditions for {selected_month_display}")
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
