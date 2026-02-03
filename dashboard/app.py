@@ -313,13 +313,10 @@ def main():
     
     with col2:
         severe_count = len(selected_month_data[selected_month_data[cdi_column] < drought_threshold])
-        total_districts = len(selected_month_data)
         st.metric(
             label="Districts Below Threshold",
             value=f"{severe_count}",
-            delta=f"of {total_districts} total",
-            delta_color="off",
-            help=f"Number of districts (out of 399) with CDI below {drought_threshold} (your selected threshold)"
+            help=f"Number of districts with CDI below {drought_threshold} (your selected threshold)"
         )
     
     with col3:
@@ -630,26 +627,12 @@ def main():
     # Footer
     st.markdown("---")
     st.markdown("""
-    ### Methodology
-    The **Combined Drought Index (CDI)** integrates three satellite-derived indicators:
-    - **VCI (Vegetation Condition Index)**: Measures vegetation health relative to historical min/max from MODIS NDVI
-    - **TCI (Temperature Condition Index)**: Measures thermal stress relative to historical min/max from MODIS LST
-    - **SPI (Standardized Precipitation Index)**: Measures precipitation anomalies using a 3-month window from CHIRPS data
-    
-    **CDI** uses equal weighting (⅓ VCI + ⅓ TCI + ⅓ SPI). **CDI_alt** applies alternative weights (0.4 VCI + 0.4 TCI + 0.2 SPI) 
-    to test robustness. This project does not aim to determine optimal weights, the alternative calculation demonstrates 
-    that findings remain consistent across different weighting schemes.
-    
-    ### Data Sources
-    - **Vegetation & Temperature**: MODIS Terra (MOD13A2 NDVI, MOD11A2 LST) via Google Earth Engine
-    - **Precipitation**: CHIRPS daily rainfall aggregated to monthly totals
-    - **Administrative Boundaries**: OCHA Afghanistan district shapefiles (400+ districts, 34 provinces)
-    - **Temporal Coverage**: January 2000 – December 2025 (monthly)
-    
     ### About
-    This dashboard monitors drought conditions across Afghanistan's 400+ districts using satellite-derived indices. 
-    All data processing, indicator construction, and validation workflows are documented in the project's Jupyter notebooks. 
-    For methodology details and source code, see the [GitHub repository](https://github.com/mfaizi1995/afg-drought-stress-dashboard).
+    This dashboard monitors drought conditions across Afghanistan's 400+ districts using a **Combined Drought Index (CDI)** 
+    that integrates three satellite-derived indicators: **VCI** (vegetation health from MODIS NDVI), **TCI** (thermal stress 
+    from MODIS LST), and **SPI** (precipitation anomalies from CHIRPS). Data spans January 2000 – December 2025.
+    
+    For detailed methodology, data sources, and source code, see the [GitHub repository](https://github.com/mfaizi1995/afg-drought-stress-dashboard).
     """)
 
 if __name__ == "__main__":
