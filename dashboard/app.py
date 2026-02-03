@@ -403,7 +403,7 @@ def main():
             fig_map.update_layout(
                 margin={"r": 0, "t": 30, "l": 0, "b": 0},
                 height=500,
-                title=f"Drought Conditions — {selected_month_display}"
+                title=f"Drought Conditions for {selected_month_display}"
             )
             st.plotly_chart(fig_map, use_container_width=True)
         elif not month_data.empty:
@@ -417,7 +417,7 @@ def main():
                 color=cdi_column,
                 color_continuous_scale='RdYlGn',
                 range_color=[0, 100],
-                title=f"CDI by District — {selected_month_display}",
+                title=f"CDI by District for {selected_month_display}",
                 hover_data={'VCI': ':.1f', 'TCI': ':.1f', 'SPI': ':.2f'}
             )
             fig_bar.update_layout(height=500, xaxis_tickangle=-45)
