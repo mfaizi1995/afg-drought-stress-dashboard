@@ -370,7 +370,6 @@ def main():
         selected_month_idx = st.select_slider(
             "Select Month",
             options=range(len(unique_months)),
-            value=st.session_state.selected_month_idx,
             key='selected_month_idx',
             format_func=lambda x: format_year_month(unique_months[x])
         )
@@ -628,7 +627,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     ### About
-    This dashboard monitors drought conditions across Afghanistan's 400+ districts using a **Combined Drought Index (CDI)** 
+    This dashboard monitors drought conditions across Afghanistan's 399 districts using a **Combined Drought Index (CDI)** 
     that integrates three satellite-derived indicators: **VCI** (vegetation health from MODIS NDVI), **TCI** (thermal stress 
     from MODIS LST), and **SPI** (precipitation anomalies from CHIRPS). Data spans January 2000 – December 2025.
     
